@@ -17,7 +17,7 @@ export interface QuotaResetLabelProps {
 }
 
 export function QuotaResetLabel({ display, classes, soon = false }: QuotaResetLabelProps) {
-  return (
+  const labels = (
     <>
       <span className={classes.quotaReset}>{display.absolute}</span>
       {display.relative && (
@@ -32,5 +32,10 @@ export function QuotaResetLabel({ display, classes, soon = false }: QuotaResetLa
         </span>
       )}
     </>
+  );
+  return classes.quotaResetGroup ? (
+    <span className={classes.quotaResetGroup}>{labels}</span>
+  ) : (
+    labels
   );
 }

@@ -31,7 +31,7 @@ const getPlanValueClass = (planType: string | null, classes: QuotaClassMap): str
   return classes.codexPlanValue;
 };
 
-export function CodexQuotaBody({ quota, classes }: QuotaBodyProps<CodexQuotaState>) {
+export function CodexQuotaBody({ quota, classes, section }: QuotaBodyProps<CodexQuotaState>) {
   const { t, i18n } = useTranslation();
   const now = useNow();
   const locale = i18n.resolvedLanguage;
@@ -49,6 +49,8 @@ export function CodexQuotaBody({ quota, classes }: QuotaBodyProps<CodexQuotaStat
   const rateLimitResetCreditsAvailableCount = quota.rateLimitResetCreditsAvailableCount ?? null;
   const rateLimitResetCredits = quota.rateLimitResetCredits ?? [];
   const rateLimitResetCreditsError = quota.rateLimitResetCreditsError ?? '';
+  const CreditContainer = section === 'limits' ? 'details' : 'div';
+  const CreditHeading = section === 'limits' ? 'summary' : 'div';
 
   const getPlanLabel = (pt?: string | null): string | null => {
     const normalized = normalizePlanType(pt);
@@ -84,129 +86,141 @@ export function CodexQuotaBody({ quota, classes }: QuotaBodyProps<CodexQuotaStat
 
   return (
     <>
-      {(planLabel ||
-        expiryDisplay ||
-        creditsUnlimited ||
-        creditBalance !== null ||
-        rateLimitResetCreditsAvailableCount !== null) && (
-        <div className={classes.codexPlan}>
-          {planLabel && (
-            <span className={classes.codexPlanItem}>
-              <span className={classes.codexPlanLabel}>{t('codex_quota.plan_label')}</span>
-              <span className={planValueClass}>{planLabel}</span>
-            </span>
-          )}
-          {expiryDisplay && (
-            <span className={classes.codexPlanItem}>
-              <span className={classes.codexPlanLabel}>{t('codex_quota.expires_label')}</span>
-              <span className={classes.codexPlanValue}>{expiryDisplay.absolute}</span>
-              {expiryDisplay.relative && (
-                <span className={classes.quotaResetRelative}>{expiryDisplay.relative}</span>
-              )}
-            </span>
-          )}
-          {(creditsUnlimited || creditBalance !== null) && (
-            <span className={classes.codexPlanItem}>
-              <span className={classes.codexPlanLabel}>
-                {t('codex_quota.credit_balance_label')}
+      {section !== 'limits' &&
+        (planLabel ||
+          expiryDisplay ||
+          creditsUnlimited ||
+          creditBalance !== null ||
+          rateLimitResetCreditsAvailableCount !== null) && (
+          <div className={classes.codexPlan}>
+            {planLabel && (
+              <span className={classes.codexPlanItem}>
+                <span className={classes.codexPlanLabel}>{t('codex_quota.plan_label')}</span>
+                <span className={planValueClass}>{planLabel}</span>
               </span>
-              <span className={classes.codexPlanValue}>
-                {creditsUnlimited ? t('codex_quota.credit_unlimited') : creditBalance}
+            )}
+            {expiryDisplay && (
+              <span className={classes.codexPlanItem}>
+                <span className={classes.codexPlanLabel}>{t('codex_quota.expires_label')}</span>
+                <span className={classes.codexPlanValue}>{expiryDisplay.absolute}</span>
+                {expiryDisplay.relative && (
+                  <span className={classes.quotaResetRelative}>{expiryDisplay.relative}</span>
+                )}
               </span>
-            </span>
-          )}
-          {rateLimitResetCreditsAvailableCount !== null && (
-            <span className={classes.codexPlanItem}>
-              <span className={classes.codexPlanLabel}>{t('codex_quota.reset_credits_label')}</span>
-              <span className={classes.codexPlanValue}>
-                {rateLimitResetCreditsAvailableCount.toString()}
+            )}
+            {(creditsUnlimited || creditBalance !== null) && (
+              <span className={classes.codexPlanItem}>
+                <span className={classes.codexPlanLabel}>
+                  {t('codex_quota.credit_balance_label')}
+                </span>
+                <span className={classes.codexPlanValue}>
+                  {creditsUnlimited ? t('codex_quota.credit_unlimited') : creditBalance}
+                </span>
               </span>
-            </span>
-          )}
-        </div>
-      )}
-      {rateLimitResetCredits.length > 0 ? (
-        <div className={classes.codexResetCredits}>
-          <div className={classes.codexResetCreditsTitle}>
-            {t('codex_quota.reset_credits_expiry_label', { timezone: resolveTimeZoneLabel() })}
+            )}
+            {rateLimitResetCreditsAvailableCount !== null && (section !== 'metadata' || rateLimitResetCredits.length === 0) && (
+              <span className={classes.codexPlanItem}>
+                <span className={classes.codexPlanLabel}>
+                  {t('codex_quota.reset_credits_label')}
+                </span>
+                <span className={classes.codexPlanValue}>
+                  {rateLimitResetCreditsAvailableCount.toString()}
+                </span>
+              </span>
+            )}
           </div>
-          {rateLimitResetCredits.map((credit, index) => {
-            const expiresAtMs = parseIsoToMs(credit.expiresAt);
-            const expiresDisplay = buildResetDisplay(
-              expiresAtMs === null ? credit.expiresAt : formatInstantShort(expiresAtMs),
-              expiresAtMs,
+        )}
+      {section !== 'metadata' &&
+        (rateLimitResetCredits.length > 0 ? (
+          <CreditContainer className={classes.codexResetCredits}>
+            <CreditHeading className={classes.codexResetCreditsTitle}>
+              {section === 'limits'
+                ? `${t('codex_quota.reset_credits_label')} · ${rateLimitResetCreditsAvailableCount ?? '--'}`
+                : t('codex_quota.reset_credits_expiry_label', { timezone: resolveTimeZoneLabel() })}
+            </CreditHeading>
+            {rateLimitResetCredits.map((credit, index) => {
+              const expiresAtMs = parseIsoToMs(credit.expiresAt);
+              const expiresDisplay = buildResetDisplay(
+                expiresAtMs === null ? credit.expiresAt : formatInstantShort(expiresAtMs),
+                expiresAtMs,
+                now,
+                locale
+              );
+              // One expression for both the key and the highlight — two copies
+              // that drift would emphasize the wrong row.
+              const rowId = resetCreditRowId(credit, index);
+              const soon = rowId === soonestRowId;
+              return (
+                <div
+                  key={rowId}
+                  className={
+                    soon
+                      ? `${classes.codexResetCreditRow} ${classes.codexResetCreditRowSoon}`
+                      : classes.codexResetCreditRow
+                  }
+                  title={soon ? t('quota_management.soonest_row_hint') : undefined}
+                >
+                  <span className={classes.codexResetCreditLabel}>
+                    {t('codex_quota.reset_credit_number', { index: index + 1 })}
+                  </span>
+                  <span className={classes.codexResetCreditTime}>
+                    {expiresDisplay && (
+                      <QuotaResetLabel display={expiresDisplay} classes={classes} soon={soon} />
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </CreditContainer>
+        ) : rateLimitResetCreditsError ? (
+          <div className={classes.codexResetCreditsError}>
+            {t('codex_quota.reset_credits_expiry_failed', {
+              message: rateLimitResetCreditsError,
+            })}
+          </div>
+        ) : null)}
+      {section !== 'metadata' &&
+        (windows.length === 0 ? (
+          <div className={classes.quotaMessage}>{t('codex_quota.empty_windows')}</div>
+        ) : (
+          windows.map((window, index) => {
+            const used = window.usedPercent;
+            const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
+            const remaining =
+              clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
+            const percentLabel = remaining === null ? '--' : `${Math.round(remaining)}%`;
+            const windowLabel = window.labelKey
+              ? t(window.labelKey, window.labelParams as Record<string, string | number>)
+              : window.label;
+            const resetDisplay = buildResetDisplay(
+              window.resetLabel,
+              window.resetAtMs,
               now,
               locale
             );
-            // One expression for both the key and the highlight — two copies
-            // that drift would emphasize the wrong row.
-            const rowId = resetCreditRowId(credit, index);
-            const soon = rowId === soonestRowId;
+
+            const soon = window.id === soonestRowId;
+
             return (
               <div
-                key={rowId}
-                className={
-                  soon
-                    ? `${classes.codexResetCreditRow} ${classes.codexResetCreditRowSoon}`
-                    : classes.codexResetCreditRow
-                }
+                key={window.id}
+                className={classes.quotaRow}
                 title={soon ? t('quota_management.soonest_row_hint') : undefined}
               >
-                <span className={classes.codexResetCreditLabel}>
-                  {t('codex_quota.reset_credit_number', { index: index + 1 })}
-                </span>
-                <span className={classes.codexResetCreditTime}>
-                  {expiresDisplay && (
-                    <QuotaResetLabel display={expiresDisplay} classes={classes} soon={soon} />
-                  )}
-                </span>
+                <div className={classes.quotaRowHeader}>
+                  <span className={classes.quotaModel}>{windowLabel}</span>
+                  <div className={classes.quotaMeta}>
+                    <span className={classes.quotaPercent}>{percentLabel}</span>
+                    {resetDisplay && (
+                      <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
+                    )}
+                  </div>
+                </div>
+                <QuotaMeter percent={remaining} classes={classes} index={index} />
               </div>
             );
-          })}
-        </div>
-      ) : rateLimitResetCreditsError ? (
-        <div className={classes.codexResetCreditsError}>
-          {t('codex_quota.reset_credits_expiry_failed', {
-            message: rateLimitResetCreditsError,
-          })}
-        </div>
-      ) : null}
-      {windows.length === 0 ? (
-        <div className={classes.quotaMessage}>{t('codex_quota.empty_windows')}</div>
-      ) : (
-        windows.map((window, index) => {
-          const used = window.usedPercent;
-          const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
-          const remaining =
-            clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
-          const percentLabel = remaining === null ? '--' : `${Math.round(remaining)}%`;
-          const windowLabel = window.labelKey
-            ? t(window.labelKey, window.labelParams as Record<string, string | number>)
-            : window.label;
-          const resetDisplay = buildResetDisplay(window.resetLabel, window.resetAtMs, now, locale);
-
-          const soon = window.id === soonestRowId;
-
-          return (
-            <div
-              key={window.id}
-              className={classes.quotaRow}
-              title={soon ? t('quota_management.soonest_row_hint') : undefined}
-            >
-              <div className={classes.quotaRowHeader}>
-                <span className={classes.quotaModel}>{windowLabel}</span>
-                <div className={classes.quotaMeta}>
-                  <span className={classes.quotaPercent}>{percentLabel}</span>
-                  {resetDisplay && (
-                    <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
-                  )}
-                </div>
-              </div>
-              <QuotaMeter percent={remaining} classes={classes} index={index} />
-            </div>
-          );
-        })
-      )}
+          })
+        ))}
     </>
   );
 }

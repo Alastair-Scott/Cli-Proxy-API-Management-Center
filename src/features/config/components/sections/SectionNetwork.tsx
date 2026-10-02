@@ -140,6 +140,10 @@ export function SectionNetwork({
                     ),
                   },
                   {
+                    value: 'reset-weighted',
+                    label: t('config_management.visual.sections.network.strategy_reset_weighted'),
+                  },
+                  {
                     value: 'fill-first',
                     label: t('config_management.visual.sections.network.strategy_fill_first'),
                   },

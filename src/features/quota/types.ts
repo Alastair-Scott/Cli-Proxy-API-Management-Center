@@ -8,6 +8,7 @@
  */
 
 export interface QuotaClassMap {
+  quotaResetGroup?: string;
   // 额度行（五个提供商共用）
   quotaRow: string;
   quotaRowHeader: string;
@@ -97,6 +98,8 @@ export function bindQuotaClasses(module: Record<string, string>, source: string)
 }
 
 export interface QuotaBodyProps<TState> {
+  /** Split metadata from limits when rendering a compact ledger row. */
+  section?: 'metadata' | 'limits';
   quota: TState;
   classes: QuotaClassMap;
 }

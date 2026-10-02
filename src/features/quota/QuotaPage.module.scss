@@ -34,6 +34,10 @@
     flex: 1 1 auto;
     min-width: 0;
   }
+  > :last-child {
+    flex: 0 0 112px;
+    width: 112px;
+  }
 }
 
 .toolbar {

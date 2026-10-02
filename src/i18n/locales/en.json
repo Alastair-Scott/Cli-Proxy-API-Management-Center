@@ -1396,7 +1396,8 @@
           "disable_cooling_desc": "Globally disable auth/model cooldown windows after failures",
           "session_affinity": "Session Affinity Routing",
           "ws_auth": "WebSocket Authentication",
-          "ws_auth_desc": "Require authentication for AI Studio WebSocket connections (oauth.providers.aistudio.ws-auth)"
+          "ws_auth_desc": "Require authentication for AI Studio WebSocket connections (oauth.providers.aistudio.ws-auth)",
+          "strategy_reset_weighted": "Reset-weighted (sooner resets favoured)"
         },
         "quota": {
           "title": "Quota Fallback",
@@ -1583,7 +1584,16 @@
     "weekday_wed": "Wed",
     "weekday_thu": "Thu",
     "weekday_fri": "Fri",
-    "weekday_sat": "Sat"
+    "weekday_sat": "Sat",
+    "show_emails": "Show emails",
+    "hide_emails": "Hide emails",
+    "view_label": "View",
+    "view_ledger": "Ledger",
+    "view_cards": "Cards",
+    "view_timeline": "Timeline",
+    "provider_summary": "Provider summary",
+    "remaining_quota": "Remaining quota",
+    "of_capacity": "of {{capacity}}%"
   },
   "plugin_management": {
     "title": "Plugin Management",

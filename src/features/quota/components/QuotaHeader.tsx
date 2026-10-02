@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
-import { useCountUp } from '@/hooks/motion';
 import styles from './QuotaHeader.module.scss';
 
 export type QuotaHeaderProps = {
+  showEmails?: boolean;
+  onToggleEmails?: () => void;
   totalCount: number;
   loadedCount: number;
   attentionCount: number;
@@ -12,19 +13,11 @@ export type QuotaHeaderProps = {
   onRefreshAll: () => void;
 };
 
-/**
- * 额度页头部：标题领衔 + ▍mono 遥测 meta 行 + 墨色药丸「刷新全部」。
- * 与凭证库头部同语汇（无 eyebrow —— ▍游标挂在 meta 行开头）。
- *
- * 入场：三处 `data-reveal` 交给页面壳的 useRevealGroup 统一编排
- * （标题 0ms → meta 70ms → 动作 140ms → tabs 210ms）。
- */
+/** Quota totals and explicit refresh/privacy controls. */
 export function QuotaHeader(props: QuotaHeaderProps) {
   const { totalCount, loadedCount, attentionCount, refreshing, disableControls, onRefreshAll } =
     props;
   const { t } = useTranslation();
-  // 批量结果陆续落地时，「已加载」是页面上唯一滚动的数字
-  const displayLoadedCount = useCountUp(loadedCount);
 
   return (
     <header className={styles.header}>
@@ -40,7 +33,7 @@ export function QuotaHeader(props: QuotaHeaderProps) {
             ·
           </span>
           <span className={loadedCount > 0 ? styles.metaLoaded : styles.metaMuted}>
-            {t('quota_management.meta_loaded', { count: displayLoadedCount })}
+            {t('quota_management.meta_loaded', { count: loadedCount })}
           </span>
           {attentionCount > 0 && (
             <>
@@ -55,6 +48,16 @@ export function QuotaHeader(props: QuotaHeaderProps) {
         </p>
       </div>
       <div className={styles.actions} data-reveal>
+        {props.onToggleEmails && (
+          <button
+            type="button"
+            className={styles.secondaryAction}
+            onClick={props.onToggleEmails}
+            aria-pressed={props.showEmails}
+          >
+            {t(props.showEmails ? 'quota_management.hide_emails' : 'quota_management.show_emails')}
+          </button>
+        )}
         <button
           type="button"
           className={styles.primaryAction}

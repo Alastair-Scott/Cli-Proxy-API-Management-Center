@@ -1420,7 +1420,8 @@
           "disable_cooling_desc": "全域停用驗證/模型失敗後的冷卻視窗",
           "session_affinity": "會話黏性路由",
           "ws_auth": "WebSocket 驗證",
-          "ws_auth_desc": "啟用 AI Studio WebSocket 連線驗證（oauth.providers.aistudio.ws-auth）"
+          "ws_auth_desc": "啟用 AI Studio WebSocket 連線驗證（oauth.providers.aistudio.ws-auth）",
+          "strategy_reset_weighted": "重設加權（優先較早重設）"
         },
         "quota": {
           "title": "配額回退",
@@ -1607,7 +1608,16 @@
     "weekday_wed": "三",
     "weekday_thu": "四",
     "weekday_fri": "五",
-    "weekday_sat": "六"
+    "weekday_sat": "六",
+    "show_emails": "顯示信箱",
+    "hide_emails": "隱藏信箱",
+    "view_label": "檢視",
+    "view_ledger": "列表",
+    "view_cards": "卡片",
+    "view_timeline": "時間軸",
+    "provider_summary": "供應商摘要",
+    "remaining_quota": "剩餘額度",
+    "of_capacity": "共 {{capacity}}%"
   },
   "plugin_management": {
     "title": "插件管理",

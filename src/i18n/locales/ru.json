@@ -1399,7 +1399,8 @@
           "disable_cooling_desc": "Глобально отключить окна охлаждения auth/model после ошибок",
           "session_affinity": "Маршрутизация с привязкой к сессии",
           "ws_auth": "Аутентификация WebSocket",
-          "ws_auth_desc": "Аутентификация WebSocket AI Studio (oauth.providers.aistudio.ws-auth)"
+          "ws_auth_desc": "Аутентификация WebSocket AI Studio (oauth.providers.aistudio.ws-auth)",
+          "strategy_reset_weighted": "По времени сброса (раньше — выше вес)"
         },
         "quota": {
           "title": "Резерв по квоте",
@@ -1586,7 +1587,16 @@
     "weekday_wed": "Ср",
     "weekday_thu": "Чт",
     "weekday_fri": "Пт",
-    "weekday_sat": "Сб"
+    "weekday_sat": "Сб",
+    "show_emails": "Показать адреса",
+    "hide_emails": "Скрыть адреса",
+    "view_label": "Вид",
+    "view_ledger": "Список",
+    "view_cards": "Карточки",
+    "view_timeline": "Шкала времени",
+    "provider_summary": "Сводка провайдеров",
+    "remaining_quota": "Оставшаяся квота",
+    "of_capacity": "из {{capacity}}%"
   },
   "plugin_management": {
     "title": "Управление плагинами",
