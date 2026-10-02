@@ -1,3 +1,9 @@
+/** A successful observation can stay visible during a background refresh. */
+export interface QuotaRefreshState {
+  refreshing?: boolean;
+  refreshError?: string;
+}
+
 /**
  * Quota management types.
  */
@@ -173,7 +179,7 @@ export interface ClaudeQuotaWindow {
   periodHours?: number | null;
 }
 
-export interface ClaudeQuotaState {
+export interface ClaudeQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   windows: ClaudeQuotaWindow[];
   extraUsage?: ClaudeExtraUsage | null;
@@ -217,7 +223,7 @@ export interface AntigravityQuotaBucket {
   periodHours?: number | null;
 }
 
-export interface AntigravityQuotaState {
+export interface AntigravityQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   groups: AntigravityQuotaGroup[];
   subscription?: AntigravityQuotaSubscription | null;
@@ -239,7 +245,7 @@ export interface CodexQuotaWindow {
   periodHours?: number | null;
 }
 
-export interface CodexQuotaState {
+export interface CodexQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   windows: CodexQuotaWindow[];
   planType?: string | null;
@@ -271,7 +277,7 @@ export interface DevinQuotaData {
   planEndMs: number | null;
 }
 
-export interface DevinQuotaState extends DevinQuotaData {
+export interface DevinQuotaState extends DevinQuotaData, QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   error?: string;
   errorStatus?: number;
@@ -293,7 +299,7 @@ export interface MetaQuotaData {
   windows: MetaQuotaWindow[];
 }
 
-export interface MetaQuotaState {
+export interface MetaQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   data?: MetaQuotaData;
   error?: string;
@@ -367,7 +373,7 @@ export interface KimiQuotaRow {
   periodHours?: number | null;
 }
 
-export interface KimiQuotaState {
+export interface KimiQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   rows: KimiQuotaRow[];
   error?: string;
@@ -461,7 +467,7 @@ export interface XaiBillingSummary {
   periodHours?: number | null;
 }
 
-export interface XaiQuotaState {
+export interface XaiQuotaState extends QuotaRefreshState {
   status: 'idle' | 'loading' | 'success' | 'error';
   billing: XaiBillingSummary | null;
   error?: string;

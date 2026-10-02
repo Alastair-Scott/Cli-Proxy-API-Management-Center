@@ -1596,7 +1596,9 @@
     "view_timeline": "Шкала времени",
     "provider_summary": "Сводка провайдеров",
     "remaining_quota": "Оставшаяся квота",
-    "of_capacity": "из {{capacity}}%"
+    "of_capacity": "из {{capacity}}%",
+    "refreshing_cached": "Обновление сохранённой квоты…",
+    "cached_refresh_failed": "Не удалось обновить. Показана сохранённая квота."
   },
   "plugin_management": {
     "title": "Управление плагинами",

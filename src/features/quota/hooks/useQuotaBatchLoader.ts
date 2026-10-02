@@ -14,7 +14,7 @@ import { captureQuotaCacheGeneration, commitIfQuotaCacheCurrent } from '@/stores
 import { getStatusFromError } from '@/utils/quota';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import type { QuotaFileEntry } from '../logic';
-import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from '../providers';
+import { QUOTA_ADAPTERS, getQuotaMap, getQuotaSetter, type QuotaCardState } from '../providers';
 import { enrichQuotaInBackground } from '../quotaEnrichment';
 import type { QuotaProviderType } from '../providers/types';
 
@@ -36,6 +36,10 @@ export function useQuotaBatchLoader() {
   const loadQuota = useCallback(
     async (targets: QuotaFileEntry[]) => {
       if (loadingRef.current) return;
+      targets = targets.filter((entry) => {
+        const quota = getQuotaMap(QUOTA_ADAPTERS[entry.type])[getQuotaCacheKey(entry.file)];
+        return quota?.status !== 'loading' && !quota?.refreshing;
+      });
       if (targets.length === 0) return;
       loadingRef.current = true;
       const requestId = ++requestIdRef.current;
@@ -59,7 +63,12 @@ export function useQuotaBatchLoader() {
               setQuota((prev) => {
                 const nextState = { ...prev };
                 entries.forEach(({ file }) => {
-                  nextState[getQuotaCacheKey(file)] = adapter.buildLoadingState();
+                  const key = getQuotaCacheKey(file);
+                  const previous = prev[key];
+                  nextState[key] =
+                    previous?.status === 'success'
+                      ? { ...previous, refreshing: true, refreshError: undefined }
+                      : adapter.buildLoadingState();
                 });
                 return nextState;
               });
@@ -96,10 +105,16 @@ export function useQuotaBatchLoader() {
                     nextState[result.cacheKey] =
                       result.status === 'success'
                         ? adapter.buildSuccessState(result.data)
-                        : adapter.buildErrorState(
-                            result.error || t('common.unknown_error'),
-                            result.errorStatus
-                          );
+                        : prev[result.cacheKey]?.status === 'success'
+                          ? {
+                              ...prev[result.cacheKey],
+                              refreshing: false,
+                              refreshError: result.error || t('common.unknown_error'),
+                            }
+                          : adapter.buildErrorState(
+                              result.error || t('common.unknown_error'),
+                              result.errorStatus
+                            );
                     committedStates.set(result.cacheKey, nextState[result.cacheKey]);
                   },
                   result.name

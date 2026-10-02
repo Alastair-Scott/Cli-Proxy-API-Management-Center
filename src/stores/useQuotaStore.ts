@@ -3,6 +3,7 @@
  */
 
 import { create } from 'zustand';
+import { quotaObservationKey, QUOTA_CACHE_KEYS, type QuotaCacheKey } from './quotaCache';
 import { getQuotaCacheFileName } from '@/utils/quota/identity';
 import type {
   AntigravityQuotaState,
@@ -16,7 +17,8 @@ import type {
 
 type QuotaUpdater<T> = T | ((prev: T) => T);
 
-interface QuotaStoreState {
+export interface QuotaStoreState {
+  observedAt: Record<string, number>;
   cacheGeneration: number;
   fileGenerations: Record<string, number>;
   antigravityQuota: Record<string, AntigravityQuotaState>;
@@ -43,7 +45,35 @@ const resolveUpdater = <T>(updater: QuotaUpdater<T>, prev: T): T => {
   return updater;
 };
 
+/** Record successful observations without changing the provider object's identity. */
+function updateQuota<K extends QuotaCacheKey>(
+  state: QuotaStoreState,
+  key: K,
+  updater: QuotaUpdater<QuotaStoreState[K]>
+) {
+  const previous = state[key];
+  const next = resolveUpdater(updater, previous);
+  if (previous === next) return state;
+  const observedAt = { ...state.observedAt };
+  for (const name of Object.keys(previous)) {
+    if (!(name in next)) delete observedAt[quotaObservationKey(key, name)];
+  }
+  for (const name of Object.keys(next)) {
+    const quota = next[name];
+    if (
+      quota !== previous[name] &&
+      quota.status === 'success' &&
+      !quota.refreshing &&
+      !quota.refreshError
+    ) {
+      observedAt[quotaObservationKey(key, name)] = Date.now();
+    }
+  }
+  return { ...state, [key]: next, observedAt };
+}
+
 export const useQuotaStore = create<QuotaStoreState>((set) => ({
+  observedAt: {},
   cacheGeneration: 0,
   fileGenerations: {},
   antigravityQuota: {},
@@ -53,32 +83,13 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
   kimiQuota: {},
   metaQuota: {},
   xaiQuota: {},
-  setAntigravityQuota: (updater) =>
-    set((state) => ({
-      antigravityQuota: resolveUpdater(updater, state.antigravityQuota),
-    })),
-  setClaudeQuota: (updater) =>
-    set((state) => ({
-      claudeQuota: resolveUpdater(updater, state.claudeQuota),
-    })),
-  setCodexQuota: (updater) =>
-    set((state) => ({
-      codexQuota: resolveUpdater(updater, state.codexQuota),
-    })),
-  setDevinQuota: (updater) =>
-    set((state) => ({
-      devinQuota: resolveUpdater(updater, state.devinQuota),
-    })),
-  setKimiQuota: (updater) =>
-    set((state) => ({
-      kimiQuota: resolveUpdater(updater, state.kimiQuota),
-    })),
-  setMetaQuota: (updater) =>
-    set((state) => ({ metaQuota: resolveUpdater(updater, state.metaQuota) })),
-  setXaiQuota: (updater) =>
-    set((state) => ({
-      xaiQuota: resolveUpdater(updater, state.xaiQuota),
-    })),
+  setAntigravityQuota: (updater) => set((state) => updateQuota(state, 'antigravityQuota', updater)),
+  setClaudeQuota: (updater) => set((state) => updateQuota(state, 'claudeQuota', updater)),
+  setCodexQuota: (updater) => set((state) => updateQuota(state, 'codexQuota', updater)),
+  setDevinQuota: (updater) => set((state) => updateQuota(state, 'devinQuota', updater)),
+  setKimiQuota: (updater) => set((state) => updateQuota(state, 'kimiQuota', updater)),
+  setMetaQuota: (updater) => set((state) => updateQuota(state, 'metaQuota', updater)),
+  setXaiQuota: (updater) => set((state) => updateQuota(state, 'xaiQuota', updater)),
   clearQuotaCache: (names) =>
     set((state) => {
       if (names) {
@@ -88,6 +99,13 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
           fileGenerations[name] = (fileGenerations[name] ?? 0) + 1;
         });
         const invalidatedNames = new Set(names);
+        const observedAt = { ...state.observedAt };
+        for (const key of QUOTA_CACHE_KEYS) {
+          for (const name of Object.keys(state[key])) {
+            if (invalidatedNames.has(getQuotaCacheFileName(name)))
+              delete observedAt[quotaObservationKey(key, name)];
+          }
+        }
         const omitNames = <T>(cache: Record<string, T>): Record<string, T> => {
           const keysToDelete = Object.keys(cache).filter((key) =>
             invalidatedNames.has(getQuotaCacheFileName(key))
@@ -99,6 +117,7 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
         };
         return {
           fileGenerations,
+          observedAt,
           antigravityQuota: omitNames(state.antigravityQuota),
           claudeQuota: omitNames(state.claudeQuota),
           codexQuota: omitNames(state.codexQuota),
@@ -109,6 +128,7 @@ export const useQuotaStore = create<QuotaStoreState>((set) => ({
         };
       }
       return {
+        observedAt: {},
         cacheGeneration: state.cacheGeneration + 1,
         fileGenerations: {},
         antigravityQuota: {},

@@ -31,13 +31,20 @@ export function useQuotaActions(disableControls: boolean) {
       if (disableControls || file.disabled) return;
       const cacheKey = getQuotaCacheKey(file);
       if (resettingQuotaName === cacheKey) return;
-      if (getQuotaState(adapter, file)?.status === 'loading') return;
+      if (
+        getQuotaState(adapter, file)?.status === 'loading' ||
+        getQuotaState(adapter, file)?.refreshing
+      )
+        return;
       const cacheGeneration = captureQuotaCacheGeneration(file.name);
       const setQuota = getQuotaSetter(adapter);
 
       setQuota((prev) => ({
         ...prev,
-        [cacheKey]: adapter.buildLoadingState(),
+        [cacheKey]:
+          prev[cacheKey]?.status === 'success'
+            ? { ...prev[cacheKey], refreshing: true, refreshError: undefined }
+            : adapter.buildLoadingState(),
       }));
 
       try {
@@ -57,7 +64,10 @@ export function useQuotaActions(disableControls: boolean) {
         commitIfQuotaCacheCurrent(cacheGeneration, () => {
           setQuota((prev) => ({
             ...prev,
-            [cacheKey]: adapter.buildErrorState(message, status),
+            [cacheKey]:
+              prev[cacheKey]?.status === 'success'
+                ? { ...prev[cacheKey], refreshing: false, refreshError: message }
+                : adapter.buildErrorState(message, status),
           }));
           showNotification(
             t('auth_files.quota_refresh_failed', { name: file.name, message }),
@@ -75,7 +85,11 @@ export function useQuotaActions(disableControls: boolean) {
       if (!resetQuotaFn) return;
       if (disableControls || file.disabled) return;
       const cacheKey = getQuotaCacheKey(file);
-      if (getQuotaState(adapter, file)?.status === 'loading') return;
+      if (
+        getQuotaState(adapter, file)?.status === 'loading' ||
+        getQuotaState(adapter, file)?.refreshing
+      )
+        return;
       if (resettingQuotaName === cacheKey) return;
 
       showConfirmation({

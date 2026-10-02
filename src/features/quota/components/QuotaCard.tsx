@@ -1,11 +1,4 @@
-/**
- * 额度卡片：头部（提供商图标 + mono 文件名）+ 四态 body + 动作 footer。
- *
- * - idle：整个 body 是一个点击加载按钮（上游直连有速率考虑，不自动拉取）；
- * - loading：双幽灵行骨架（aria-busy，文字等价视觉隐藏）；
- * - error：失败色条 + footer 刷新即重试；
- * - success：provider Body（穿 QuotaBody.module.scss 全页外衣）。
- */
+/** Account quota presentation, retaining successful values during background refresh. */
 
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -101,7 +94,7 @@ export function QuotaCard(props: QuotaCardProps) {
   const claudeReset = useClaudeResetGrants(
     file,
     entry.type === 'claude' && status !== 'idle',
-    !canRefresh || loading || resetting,
+    !canRefresh || loading || Boolean(quota?.refreshing) || resetting,
     quota,
     onRefresh
   );
@@ -150,6 +143,16 @@ export function QuotaCard(props: QuotaCardProps) {
         </span>
         {splitBody && status === 'success' && quota && (
           <adapter.Body quota={quota} classes={classes} section="metadata" />
+        )}
+        {quota?.refreshing && (
+          <span className={styles.cacheStatus} role="status">
+            {t('quota_management.refreshing_cached')}
+          </span>
+        )}
+        {quota?.refreshError && (
+          <span className={styles.cacheStatus} role="status">
+            {t('quota_management.cached_refresh_failed')}
+          </span>
         )}
       </header>
 
@@ -223,7 +226,7 @@ export function QuotaCard(props: QuotaCardProps) {
               type="button"
               className={isLedger ? ledger.action : styles.actionPill}
               onClick={onReset}
-              disabled={!canRefresh || loading || resetting}
+              disabled={!canRefresh || loading || Boolean(quota?.refreshing) || resetting}
               title={t('codex_quota.reset_button')}
             >
               <IconRefreshCw size={13} className={resetting ? styles.spinning : undefined} />
@@ -234,7 +237,11 @@ export function QuotaCard(props: QuotaCardProps) {
             type="button"
             className={isLedger ? ledger.action : styles.actionPill}
             onClick={onRefresh}
-            disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
+            disabled={isQuotaRefreshDisabled(
+              canRefresh,
+              loading || Boolean(quota?.refreshing),
+              resetting || claudeReset.busy
+            )}
             title={t('auth_files.quota_refresh_hint')}
           >
             <IconRefreshCw size={13} className={loading ? styles.spinning : undefined} />

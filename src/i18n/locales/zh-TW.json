@@ -1617,7 +1617,9 @@
     "view_timeline": "時間軸",
     "provider_summary": "供應商摘要",
     "remaining_quota": "剩餘額度",
-    "of_capacity": "共 {{capacity}}%"
+    "of_capacity": "共 {{capacity}}%",
+    "refreshing_cached": "正在重新整理快取額度…",
+    "cached_refresh_failed": "重新整理失敗。顯示快取額度。"
   },
   "plugin_management": {
     "title": "插件管理",

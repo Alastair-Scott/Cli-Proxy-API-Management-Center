@@ -1591,7 +1591,9 @@
     "view_timeline": "时间线",
     "provider_summary": "提供商汇总",
     "remaining_quota": "剩余额度",
-    "of_capacity": "共 {{capacity}}%"
+    "of_capacity": "共 {{capacity}}%",
+    "refreshing_cached": "正在刷新缓存额度…",
+    "cached_refresh_failed": "刷新失败。显示缓存额度。"
   },
   "plugin_management": {
     "title": "插件管理",

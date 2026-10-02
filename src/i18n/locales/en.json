@@ -1593,7 +1593,9 @@
     "view_timeline": "Timeline",
     "provider_summary": "Provider summary",
     "remaining_quota": "Remaining quota",
-    "of_capacity": "of {{capacity}}%"
+    "of_capacity": "of {{capacity}}%",
+    "refreshing_cached": "Refreshing cached quota…",
+    "cached_refresh_failed": "Refresh failed. Showing cached quota."
   },
   "plugin_management": {
     "title": "Plugin Management",

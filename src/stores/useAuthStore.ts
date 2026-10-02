@@ -13,6 +13,11 @@ import { LegacyBackendError, probeLegacyBackend } from '@/services/api/legacyBac
 import { useConfigStore } from './useConfigStore';
 import { useModelsStore } from './useModelsStore';
 import { useQuotaStore } from './useQuotaStore';
+import {
+  suspendQuotaPersistence,
+  restoreQuotaPersistence,
+  forgetQuotaPersistence,
+} from './quotaPersistence';
 import { detectApiBaseFromLocation, normalizeApiBase } from '@/utils/connection';
 
 interface AuthStoreState extends AuthState {
@@ -105,6 +110,7 @@ export const useAuthStore = create<AuthStoreState>()(
           });
           useConfigStore.getState().clearCache();
           useModelsStore.getState().clearCache();
+          suspendQuotaPersistence();
           useQuotaStore.getState().clearQuotaCache();
 
           // 配置 API 客户端
@@ -128,6 +134,9 @@ export const useAuthStore = create<AuthStoreState>()(
             }
             throw error;
           }
+
+          if (revision !== apiClient.getConnectionRevision()) return;
+          restoreQuotaPersistence(apiBase, managementKey);
 
           // 登录成功
           set({
@@ -154,6 +163,7 @@ export const useAuthStore = create<AuthStoreState>()(
         apiClient.setConfig({ apiBase: '', managementKey: '' });
         useConfigStore.getState().clearCache();
         useModelsStore.getState().clearCache();
+        forgetQuotaPersistence();
         useQuotaStore.getState().clearQuotaCache();
         set({
           isAuthenticated: false,
